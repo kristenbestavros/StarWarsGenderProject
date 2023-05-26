@@ -1,12 +1,12 @@
-use crate::gendercounting::gendercounting::{percentwomen, percentwomennodroids, percentffinteractionswomen,percentffinteractionsall,percentmminteractionsmen, percentmminteractionsall,sepbetweenwomen};
+use crate::gendercounting::gendercounting::{percentwomen, interactionpercentages,sepbetweenwomen};
 use crate::makedata::makedata::{makedata};
 use std::time::{Instant};
 mod graph;
 mod gendercounting;
 mod makedata;
-use crate::graph::graph::Graph;
-use crate::graph::graph::Link;
-use crate::graph::graph::Node;
+pub use crate::graph::graph::Graph;
+pub use crate::graph::graph::Link;
+pub use crate::graph::graph::Node;
 
 
 #[cfg(test)]
@@ -63,23 +63,22 @@ mod tests {
         genders.insert("girl2".to_string(), "f".to_string());
         genders.insert("girl3".to_string(), "f".to_string());
         let (women,sep)=sepbetweenwomen(&graph, &genders);
-        println!("{:?}",women);
-        println!("{:?}",sep);
-        println!("{:?}",graph.adjacencies());
+        
+        let interactionpercents=interactionpercentages(&graph, &genders);
+        let womenpercents=percentwomen(&graph, &genders);
+
         assert_eq!(women[0],3);
         assert_eq!(women[1],4);
         assert_eq!(women[2],5);
         assert_eq!(sep[0],2);
         assert_eq!(sep[1],0);
         assert_eq!(sep[2],0);
-        assert_eq!(percentffinteractionsall(&graph, &genders),0.2);
-        assert_eq!(percentffinteractionswomen(&graph, &genders),(1.0/3.0));
-        assert_eq!(percentmminteractionsall(&graph, &genders),0.4);
-        assert_eq!(percentmminteractionsmen(&graph, &genders),0.5);
-        assert_eq!(percentwomen(&graph, &genders),0.5);
-        assert_eq!(percentwomennodroids(&graph, &genders),0.5);
-
-        
+        assert_eq!(interactionpercents.0,0.2);
+        assert_eq!(interactionpercents.1,(1.0/3.0));
+        assert_eq!(interactionpercents.2,0.4);
+        assert_eq!(interactionpercents.3,0.5);
+        assert_eq!(womenpercents.0,0.5);
+        assert_eq!(womenpercents.1,0.5);
         
     }
     
@@ -112,12 +111,14 @@ fn main() {
             println!("\t{} - {}",graph.nodes[women[i]].name,seps[i]);
         }
         println!("");
-        ffall=ffall+percentffinteractionsall(&graph, &genders);
-        ffwomen=ffwomen+percentffinteractionswomen(&graph, &genders);
-        mmall=mmall+percentmminteractionsall(&graph, &genders);
-        mmmen=mmmen+percentmminteractionsmen(&graph, &genders);
-        pctwomen=pctwomen+percentwomen(&graph, &genders);
-        womennodroids=womennodroids+percentwomennodroids(&graph, &genders);
+        let interactiontuple=&interactionpercentages(&graph, &genders);
+        ffall=ffall+interactiontuple.0;
+        ffwomen=ffwomen+interactiontuple.1;
+        mmall=mmall+interactiontuple.2;
+        mmmen=mmmen+interactiontuple.3;
+        let percenttuple=&percentwomen(&graph, &genders);
+        pctwomen=pctwomen+percenttuple.0;
+        womennodroids=womennodroids+percenttuple.1;
 
         episodenum=episodenum+1;
     }
@@ -145,12 +146,15 @@ fn main() {
             println!("\t{} - {}",graph.nodes[women[i]].name,seps[i]);
         }
         println!("");
-        ffall=ffall+percentffinteractionsall(&graph, &genders);
-        ffwomen=ffwomen+percentffinteractionswomen(&graph, &genders);
-        mmall=mmall+percentmminteractionsall(&graph, &genders);
-        mmmen=mmmen+percentmminteractionsmen(&graph, &genders);
-        pctwomen=pctwomen+percentwomen(&graph, &genders);
-        womennodroids=womennodroids+percentwomennodroids(&graph, &genders);
+        let interactiontuple=&interactionpercentages(&graph, &genders);
+        ffall=ffall+interactiontuple.0;
+        ffwomen=ffwomen+interactiontuple.1;
+        mmall=mmall+interactiontuple.2;
+        mmmen=mmmen+interactiontuple.3;
+        let percenttuple=&percentwomen(&graph, &genders);
+        pctwomen=pctwomen+percenttuple.0;
+        womennodroids=womennodroids+percenttuple.1;
+
         episodenum=episodenum+1;
     }
     println!("ORIGINAL TRILOGY STATS");
@@ -172,29 +176,35 @@ fn main() {
     for i in 0..women.len(){
         println!("\t{} - {}",graph.nodes[women[i]].name,seps[i]);
     }
+
+    let interactiontuple=&interactionpercentages(&graph, &genders);
+    let percenttuple=&percentwomen(&graph, &genders);
+    
     println!("");
     println!("EPISODE 7 STATS");
-    println!("\tPercent female characters: {}",percentwomen(&graph, &genders));
-    println!("\tPercent female characters no droids: {}",percentwomennodroids(&graph, &genders));
-    println!("\tPercentage of female interactions that are between two women: {}",percentffinteractionswomen(&graph, &genders));
-    println!("\tPercentage of all interactions between two women: {}",percentffinteractionsall(&graph, &genders));
-    println!("\tPercentage of male interactions that are between two men:{}",percentmminteractionsmen(&graph,&genders));
-    println!("\tPercentage of all interactions that are between two men:{}",percentmminteractionsall(&graph,&genders));
+    println!("\tPercent female characters: {}",percenttuple.0);
+    println!("\tPercent female characters no droids: {}",percenttuple.1);
+    println!("\tPercentage of female interactions that are between two women: {}",interactiontuple.0);
+    println!("\tPercentage of all interactions between two women: {}",interactiontuple.1);
+    println!("\tPercentage of male interactions that are between two men:{}",interactiontuple.2);
+    println!("\tPercentage of all interactions that are between two men:{}",interactiontuple.3);
     println!("");
-    //println!("{:?}",sepbetweenwomen(graph, genders));
+
     let (graph,genders)=makedata();
     let start = Instant::now();
     sepbetweenwomen(&graph, &genders);
     let duration = start.elapsed();
+    let interactionpercents=interactionpercentages(&graph, &genders);
+    let womenpercents=percentwomen(&graph, &genders);
     println!("GENERATED DATA");
     println!("\tExample of node name and getting gender: name - {}, gender - {}",graph.nodes[0].name,genders[&graph.nodes[0].name]);
     println!("\tTime to calculate degrees of seperation: {:?}",duration);
-    println!("\tPercent female characters: {}",percentwomen(&graph, &genders));
-    println!("\tPercent female characters no droids: {}",percentwomennodroids(&graph, &genders));
-    println!("\tPercentage of female interactions that are between two women: {}",percentffinteractionswomen(&graph, &genders));
-    println!("\tPercentage of all interactions that are between two women: {}",percentffinteractionsall(&graph, &genders));
-    println!("\tPercentage of male interactions that are between two men:{}",percentmminteractionsmen(&graph,&genders));
-    println!("\tPercentage of all interactions that are between two men:{}",percentmminteractionsall(&graph,&genders));
+    println!("\tPercent female characters: {}",womenpercents.0);
+    println!("\tPercent female characters no droids: {}",womenpercents.1);
+    println!("\tPercentage of female interactions that are between two women: {}",interactionpercents.0);
+    println!("\tPercentage of all interactions that are between two women: {}",interactionpercents.1);
+    println!("\tPercentage of male interactions that are between two men:{}",interactionpercents.2);
+    println!("\tPercentage of all interactions that are between two men:{}",interactionpercents.3);
 
 
 
